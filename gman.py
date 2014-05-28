@@ -27,12 +27,14 @@ else:
 
 
 def tag_path(tag, path):
-    print "Adding tag %s to %s" % (tag, path)
-    if tag in tags:
-        if path not in tags[tag]:
-            tags[tag] += [path]
+    if is_git_repo(path):
+        if tag in tags:
+            if path not in tags[tag]:
+                tags[tag] += [path]
+        else:
+            tags[tag] = [path]
     else:
-        tags[tag] = [path]
+        print """"%s" isn't a git repository.""" % path
 
 
 def untag_path(remove_tag, path):
@@ -56,6 +58,16 @@ def run_cmd(tag, command):
     for path in tags[tag]:
         print "For %s:" % path
         subprocess.Popen(["git"] + command, cwd=path).wait()
+    print
+
+
+def is_git_repo(path):
+    (_, stderr) = subprocess.Popen(
+        ["git", "status"], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    if stderr == "fatal: Not a git repository (or any of the parent directories): .git\n":
+        return False
+    else:
+        return True
 
 
 def exit_cleanup():
@@ -80,8 +92,10 @@ if args.untag:
     if args.untag[0] not in tags:
         print """"%s" isn't a tag you're using.""" % args.untag[0]
     if len(args.untag) == 1:
+        print "Removing tag %s from %s." % (args.untag[0], os.path.normpath(os.getcwd()))
         untag_path(args.untag[0], os.path.normpath(os.getcwd()))
     else:
+        print "Removing tag %s from" % args.untag[0],  ", ".join(args.untag[1:])
         for path in args.untag[1:]:
             untag_path(args.untag[0], os.path.abspath(path))
 
