@@ -105,7 +105,10 @@ elif args.list:
     list_tags()
 elif args.working_tag:
     if args.COMMAND:
-        if args.working_tag in tags:
+        if args.working_tag.upper() == "ALL":
+            for tag in tags:
+                run_cmd(tag, args.COMMAND)
+        elif args.working_tag in tags:
             run_cmd(args.working_tag, args.COMMAND)
         else:
             print """"%s" isn't a tag you're using.""" % args.working_tag
