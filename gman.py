@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import argparse
 import atexit
-import os
 import cPickle as pickle
+import os
 import subprocess
+import sys
 
 parser = argparse.ArgumentParser(
     description="Manage multiple git repositories by tags.")
@@ -28,6 +29,7 @@ else:
 
 def tag_path(tag, path):
     if is_git_repo(path):
+        print """Tagging "%s" with "%s" """ % (path, tag)
         if tag in tags:
             if path not in tags[tag]:
                 tags[tag] += [path]
@@ -35,6 +37,7 @@ def tag_path(tag, path):
             tags[tag] = [path]
     else:
         print """"%s" isn't a git repository.""" % path
+        sys.exit(1)
 
 
 def untag_path(remove_tag, path):
@@ -87,26 +90,29 @@ if args.tag:
     else:
         for path in args.tag[1:]:
             tag_path(args.tag[0], os.path.abspath(path))
-
-if args.untag:
+elif args.untag:
     if args.untag[0] not in tags:
         print """"%s" isn't a tag you're using.""" % args.untag[0]
+        sys.exit(1)
     if len(args.untag) == 1:
-        print "Removing tag %s from %s." % (args.untag[0], os.path.normpath(os.getcwd()))
+        print """Removing tag "%s" from "%s".""" % (args.untag[0], os.path.normpath(os.getcwd()))
         untag_path(args.untag[0], os.path.normpath(os.getcwd()))
     else:
-        print "Removing tag %s from" % args.untag[0],  ", ".join(args.untag[1:])
+        print """Removing tag "%s" from""" % args.untag[0],  ", ".join(args.untag[1:])
         for path in args.untag[1:]:
             untag_path(args.untag[0], os.path.abspath(path))
-
-if args.list:
+elif args.list:
     list_tags()
-
-if args.working_tag:
+elif args.working_tag:
     if args.COMMAND:
         if args.working_tag in tags:
             run_cmd(args.working_tag, args.COMMAND)
         else:
             print """"%s" isn't a tag you're using.""" % args.working_tag
+            sys.exit(1)
     else:
         print "Please supply a command to run."
+        sys.exit(1)
+else:
+    parser.print_usage()
+    sys.exit(1)
